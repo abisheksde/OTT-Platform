@@ -9,19 +9,19 @@ public class WatchHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long histroyId;
-    private long userId;
+    private String email;
     private long contentId;
 
-    public WatchHistory(long userId, long contentId) {
-        this.userId = userId;
+    public WatchHistory(String email, long contentId) {
+        this.email = email;
         this.contentId = contentId;
     }
 
     public WatchHistory() {
     }
 
-    public long getUserId() {
-        return userId;
+    public String getEmail() {
+        return email;
     }
 
 

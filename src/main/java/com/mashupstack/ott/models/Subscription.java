@@ -12,7 +12,7 @@ public class Subscription {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
-    private long userid;
+    private long userId;
     private long planid;
     private long txnid;
     private LocalDate subscriptionDate;
@@ -23,12 +23,12 @@ public class Subscription {
         return id;
     }
 
-    public long getUserid() {
-        return userid;
+    public long getUserId() {
+        return userId;
     }
 
-    public void setUserid(long userid) {
-        this.userid = userid;
+    public void setUserid(long userId) {
+        this.userId = userId;
     }
 
     public long getPlanid() {

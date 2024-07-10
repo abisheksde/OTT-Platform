@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.List;
 
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
     //Long findByIsActive(boolean b);
@@ -13,5 +14,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     long countByIsActiveTrue();
 
 
+    List<Subscription> findByUserId(long id);
 
+    boolean existsByUserIdAndActive(long userId, boolean active);
+
+    Subscription findByUserIdAndIsActive(long id, boolean b);
 }

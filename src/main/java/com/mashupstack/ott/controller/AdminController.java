@@ -2,7 +2,6 @@ package com.mashupstack.ott.controller;
 
 import com.mashupstack.ott.models.User;
 import com.mashupstack.ott.repository.UserRepository;
-import com.mashupstack.ott.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +17,10 @@ public class AdminController {
     @Autowired
     UserRepository userRepository;
 
-    @Autowired
-    UserService userService;
+    @GetMapping("/admin-page")
+    public String adminDashboard(){
+        return "admin-page";
+    }
 
     @GetMapping("/usersList")
     public List<User> getUsers(){
@@ -32,14 +33,28 @@ public class AdminController {
 
     @PostMapping("block/{userId}")
     public void blockUser(@PathVariable Long userId){
-        userService.blockUser(userId);
+        Optional<User> optionalUser = userRepository.findById(userId);
+
+        User user = optionalUser.get();
+
+        if(!user.getIsblocked()){
+            user.setIsblocked(true);
+            userRepository.save(user);
+        }
         ///TODO:Just We Set the Boolean Value. We didn't implement Block Functionality yet
         ///TODO:We blocked the User, But not denied Access
     }
 
     @PostMapping("unblock/{userId}")
     public void unblockUser(@PathVariable Long userId){
-        userService.unblockUser(userId);
+        Optional<User> optionalUser = userRepository.findById(userId);
+
+        User user = optionalUser.get();
+
+        if(user.getIsblocked()){
+            user.setIsblocked(false);
+            userRepository.save(user);
+        }
         ///TODO:Just We Set the Boolean Value. We didn't implement Unblock Functionality yet
     }
 }

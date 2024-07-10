@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User WishList</title>
+</head>
+<body>
+<h1>WishList</h1>
+<ul>
+    <th:block th:each="item : ${wishList}">
+        <li>
+            <h2 th:text="${item.itemName}"></h2>
+            <p th:text="${item.description}"></p>
+            <button>Play</button>
+        </li>
+    </th:block>
+</ul>
+</body>
+</html>

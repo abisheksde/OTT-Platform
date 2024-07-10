@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Watch History</title>
+</head>
+<body>
+<h1>Watch History</h1>
+<table border="1">
+    <thead>
+    <tr>
+        <th>Video Title</th>
+        <th>Watched Date</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="history : ${watchHistory}">
+        <td th:text="${history.videoTitle}"></td>
+        <td th:text="${#dates.format(history.watchedDate, 'dd-MM-yyyy HH:mm')}"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

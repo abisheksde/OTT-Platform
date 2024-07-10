@@ -5,9 +5,9 @@ import com.mashupstack.ott.models.Subscription;
 import com.mashupstack.ott.models.SubscriptionPlans;
 import com.mashupstack.ott.repository.SubscriptionPlanRepository;
 import com.mashupstack.ott.repository.SubscriptionRepository;
-import com.mashupstack.ott.service.PlanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,44 +24,72 @@ public class SubscriptionController {
     @Autowired
     SubscriptionRepository subscriptionRepository;
 
-    @Autowired
-    PlanService planService;
+
 
     @GetMapping("plans")
-    public List<SubscriptionPlans> planList(){
-        return subscriptionPlanRepository.findAll();
+    public String planList(Model model){
+        List<SubscriptionPlans> plans = subscriptionPlanRepository.findAll();
+        model.addAttribute("plan", plans);
+
+        return "plan-page";
     }
 
     @PostMapping("plans/create")
     public void createPlan(@RequestBody PlanDto planDto){
-        planService.savePlan(planDto);
+        SubscriptionPlans subscriptionPlans = new SubscriptionPlans(planDto.getValidity(), planDto.getPrice());
+
+        subscriptionPlanRepository.save(subscriptionPlans);
     }
 
     @PutMapping("plans/update/{planId}")
     public void updatePlan(@PathVariable Long planId, @RequestBody PlanDto planDto){
-        planService.updatePlan(planId, planDto);
+        Optional<SubscriptionPlans> optionalPlan = subscriptionPlanRepository.findById(planId);
+
+        SubscriptionPlans plan = optionalPlan.get();
+
+        plan.setValidity(planDto.getValidity());
+        plan.setPrice(planDto.getPrice());
+
+        System.out.println(planId);
+        subscriptionPlanRepository.save(plan);
     }
 
     @DeleteMapping("plans/delete/{planId}")
     public void deletePlan(@PathVariable Long planId){
-        planService.deletePlan(planId);
+        subscriptionPlanRepository.deleteById(planId);
     }
 
     ///TODO: Not Completed
     @PostMapping("plans/activate/{planid}")
     public void activateSubscription(@PathVariable Long planId){
-        planService.activatePlan(planId);
+        Optional<SubscriptionPlans> optionalPlan = subscriptionPlanRepository.findById(planId);
+        SubscriptionPlans planToActivate = optionalPlan.get();
+
+        ///TODO: Get Current Logged in User (Using Authentication)
+        ///TODO: Check the User Already have Active Plan??
+        // If Not
+        ///TODO: Create a Subscription for this Plan
+        ///TODO: Set isActive is True
+        ///TODO: Save that Subscription to Repository
+        /// NOTE : Try to deactivate the Subscription automatically after the Expiry Date (If possible)
     }
 
     ///TODO:Not Tested
     @PostMapping("plans/deactivate/{subscriptionId}")
     public void deactivateSubscription(@PathVariable Long subscriptionId){
-        planService.deactivatePlan(subscriptionId);
+        Optional<Subscription> optionalPlan = subscriptionRepository.findById(subscriptionId);
+        Subscription subscriptionToDeactivate = optionalPlan.get();
+
+        if(subscriptionToDeactivate.isActive()){
+            subscriptionToDeactivate.setActive(false);
+        }
+
+        subscriptionRepository.save(subscriptionToDeactivate);
     }
 
     ///TODO: Not Tested
     @PostMapping("plans/expired/{subscriptionId}")
-    public void expireSubscription(@PathVariable Long subscriptionId){
+    public boolean expireSubscription(@PathVariable Long subscriptionId){
         Optional<Subscription> subscriptionToExpire = subscriptionRepository.findById(subscriptionId);
 
         Subscription subscription = subscriptionToExpire.get();
@@ -69,8 +97,18 @@ public class SubscriptionController {
         LocalDate expiryDate = subscription.getExpiryDate();
 
         if(expiryDate.isBefore(LocalDate.now())){
-            planService.deactivatePlan(subscriptionId);
+            Optional<Subscription> optionalPlan = subscriptionRepository.findById(subscriptionId);
+            Subscription subscriptionToDeactivate = optionalPlan.get();
+
+            if(subscriptionToDeactivate.isActive()){
+                subscriptionToDeactivate.setActive(false);
+            }
+
+            subscriptionRepository.save(subscriptionToDeactivate);
+            return false;
         }
+
+        return true;
     }
 /*
 
@@ -82,7 +120,21 @@ public class SubscriptionController {
     @GetMapping("/report")
     public Long[] getTotalSubscriptionCount(){
 
-        return planService.report();
+        long totalSubscription = subscriptionRepository.count();
+
+
+        long activeSubscription = subscriptionRepository.countByIsActiveTrue();
+        //It will take count of true value in isActive column
+
+        long inactiveSubscription = totalSubscription-activeSubscription;
+
+        Long[] reportArray = new Long[3];
+
+        reportArray[0] = totalSubscription;
+        reportArray[1] = activeSubscription;
+        reportArray[2] = inactiveSubscription;
+
+        return reportArray;
     }
 
 }

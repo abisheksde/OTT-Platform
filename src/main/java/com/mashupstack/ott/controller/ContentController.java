@@ -1,9 +1,15 @@
 package com.mashupstack.ott.controller;
 import com.mashupstack.ott.dto.ContentDto;
 import com.mashupstack.ott.models.Content;
+import com.mashupstack.ott.models.Subscription;
+import com.mashupstack.ott.models.User;
 import com.mashupstack.ott.repository.ContentRepository;
-import com.mashupstack.ott.service.ContentService;
+import com.mashupstack.ott.repository.SubscriptionRepository;
+import com.mashupstack.ott.repository.UserRepository;
+import com.mashupstack.ott.repository.WatchHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,14 +22,27 @@ import java.util.Optional;
 public class ContentController {
 
     @Autowired
-    ContentService contentService;
+    WatchHistoryRepository watchHistoryRepository;
 
     @Autowired
     ContentRepository contentRepository;
 
+    @Autowired
+    SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    SubscriptionController subscriptionController;
+
+    @Autowired
+    UserController userController;
+
     @PostMapping("/create")
     public void addContent(@RequestBody ContentDto contentDto){
-        contentService.save(contentDto);
+        Content content = new Content(contentDto.getTitle(), contentDto.getDescription(), contentDto.getLanguage(), contentDto.getCategory(), contentDto.getUrl(), contentDto.getThumbnail());
+         contentRepository.save(content);
     }
 
     @GetMapping("/contentList")
@@ -36,16 +55,36 @@ public class ContentController {
     ///TODO: Not Completed
     @GetMapping("/play/{contentId}")
     public void playContent(@PathVariable Long contentId){
-        ///TODO: Get the Current Logged in User
-        ///TODO: Check Role is User
-        ///IF USER
-            ///TODO: Check User have any Active Plan
-                ///TODO: If Have - Check The Plan is Expired or Not (Code Already Written in Subscription Controller)
-                    ///TODO: If Not Expired - Allow to Watch & Add to Watch History (contentService.addWatchHistory(contentId);)
-                    ///TODO: If Expired - Deactivate the Plan (Code Already Written in Subscription Controller>PlanService) & Don't Allow to Watch
-                ///TODO: If Don't Have - Don't Allow to Watch
-        ///IF ADMIN
-            ///TODO: Allow to Watch without any Restrictions & Add to Watch History (contentService.addWatchHistory(contentId);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+        User user = userRepository.findByEmail(userEmail);
+
+        if(user.getRole().equals("USER")){
+
+            Subscription subscription = subscriptionRepository.findByUserIdAndIsActive(user.getId(), true);
+
+            Long subscriptionId = subscription.getId();
+
+            boolean active = subscriptionRepository.existsByUserIdAndActive(user.getId(), true);
+
+            if(active){
+                boolean isActive = subscriptionController.expireSubscription(subscriptionId);
+
+                if (isActive){
+                    ///TODO: Allow to Watch
+                    userController.addWatchHistory(contentId);
+
+                }else {
+                    subscriptionController.deactivateSubscription(subscriptionId);
+                }
+            } else {
+                ///TODO: Don't Allow to Watch
+            }
+        } else {
+            ///TODO: Allow to Watch
+            userController.addWatchHistory(contentId);
+        }
+
     }
 
     @DeleteMapping("delete/{contentId}")
@@ -76,9 +115,7 @@ public class ContentController {
 
     }
 
-    @PostMapping("clear")
-    public void clearHistory(){
-        contentService.clearHistory();
-    }
+
+
 
 }

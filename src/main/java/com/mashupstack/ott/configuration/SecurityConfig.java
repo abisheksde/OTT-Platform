@@ -1,8 +1,7 @@
-/*
 package com.mashupstack.ott.configuration;
-*/
-/*import com.mashupstack.ott.service.CustomUserDetail;
-import com.mashupstack.ott.service.CustomUserDetailService;*//*
+import com.mashupstack.ott.service.CustomSuccessHandler;
+import com.mashupstack.ott.service.CustomUserDetail;
+import com.mashupstack.ott.service.CustomUserDetailService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -21,17 +20,13 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @Configuration
 @EnableWebSecurity
 @Order(1)
-public class SecurityConfig extends WebSecurityConfiguration {
+public class SecurityConfig {
 
-   */
-/* @Autowired
-    CustomUserDetailService customUserDetailService;*//*
+ @Autowired
+    CustomUserDetailService customUserDetailService;
 
-
-    private static final String[] WHITELIST_URLS ={
-            "/",
-            "/api/create",
-    };
+ @Autowired
+    CustomSuccessHandler customSuccessHandler;
 
     @Bean
     public static PasswordEncoder passwordEncoder(){
@@ -41,29 +36,24 @@ public class SecurityConfig extends WebSecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
 
-
-
         httpSecurity
                 .csrf(c-> c.disable())
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers(WHITELIST_URLS).permitAll()
+
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/user/**").hasAuthority("USER")
+                        .requestMatchers("/create", "/css/**", "/js/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .anonymous(a -> a.disable())
                 .formLogin(form -> form
-                        .loginPage("/loginPage").loginProcessingUrl("/login").permitAll()
+                        .loginPage("/login").loginProcessingUrl("/authenticateTheUser")
+                        .successHandler(customSuccessHandler).permitAll()
                 )
                 .logout(form -> form
                         .invalidateHttpSession(true).clearAuthentication(true)
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
                         .logoutSuccessUrl("/login?logout").permitAll()
                 );
-
         return httpSecurity.build();
     }
 
@@ -74,4 +64,3 @@ public class SecurityConfig extends WebSecurityConfiguration {
     }
 
 }
-*/
